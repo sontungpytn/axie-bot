@@ -25,6 +25,6 @@ body
 
 ```json
 {
-  "id": "axie id"
+  "id":"75176"
 }
 ```
