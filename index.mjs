@@ -16,7 +16,7 @@ const port = process.env.PORT || 3000
 
 
 const addresses = {
-    router: '0x10ED43C718714eb63d5aA57B78B54704E256024E', // Marketplace address
+    router: '0x213073989821f738a7ba3520c3d31a1f9ad31bbd', // Marketplace address
     token: '0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5' // Ronin Token address
 }
 
