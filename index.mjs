@@ -5,6 +5,9 @@ import bodyParser from 'body-parser'
 import {GraphQLClient} from 'graphql-request'
 import {GetAxieDetail} from './graphql/query.mjs'
 
+const ZERO_BN = ethers.constants.Zero;
+const MAX_UINT256 = ethers.constants.MaxUint256;
+
 // Load environment
 dotenv.config()
 
@@ -17,7 +20,8 @@ const port = process.env.PORT || 3000
 
 const addresses = {
     router: '0x213073989821f738a7ba3520c3d31a1f9ad31bbd', // Marketplace address
-    token: '0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5' // Ronin Token address
+    token: '0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5', // Ronin Token address,
+    weth: '0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5'
 }
 
 const endpoint = 'https://axieinfinity.com/graphql-server-v2/graphql'
@@ -39,6 +43,48 @@ const router = new ethers.Contract(
     account
 )
 
+const weth = new ethers.Contract(
+    addresses.weth,
+    [
+        'function approve ( address _spender, uint256 _value ) external returns ( bool )',
+        'function allowance (address owner, address delegate) external view returns (uint)'
+    ],
+    account
+)
+
+// allow marketplace using weth
+const approve = async value => {
+    console.log('Approve value ', value)
+    const approveTx = await weth.approve(
+        router.address,
+        ethers.BigNumber.from(value)
+    )
+
+    const receipt = await approveTx.wait()
+    console.log('Transaction receipt')
+    console.log(receipt)
+    return receipt
+}
+
+
+app.get('/allowance', async (req, res) => {
+    const transaction = await weth.allowance(
+        account.address,
+        router.address
+    )
+    //
+    console.log(transaction)
+    return res.json(transaction)
+})
+
+app.post('/approve', async (req, res) => {
+    const {value} = req.body
+    const tx = await approve(value)
+    return res.json({
+        transaction: tx
+    })
+})
+
 /**
  * Buy axie buy id
  *
@@ -53,10 +99,12 @@ app.post('/buy', async (req, res) => {
         const auction = axieData?.axie?.auction
         console.table(auction)
         if (auction) {
+
+            const price = auction.currentPrice
             const tx = await router.settleAuction(
                 auction.seller,
                 addresses.token,
-                auction.currentPrice,
+                price,
                 auction.listingIndex,
                 auction.state
             )
@@ -83,3 +131,4 @@ app.post('/buy', async (req, res) => {
 app.listen(port, host, () => {
     console.log(`Server started on ${host}:${port}`)
 })
+
