@@ -74,7 +74,9 @@ app.get('/allowance', async (req, res) => {
     )
     //
     console.log(transaction)
-    return res.json(transaction)
+    return res.json({
+        value: transaction.toString()
+    })
 })
 
 app.post('/approve', async (req, res) => {
